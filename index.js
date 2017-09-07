@@ -47,46 +47,6 @@ module.exports = class KoaIlp {
     })
   }
 
-  rpc ({ token }) {
-    return async (ctx, next) => {
-      if (!this.plugin.isConnected()) {
-        await this.plugin.connect()
-      }
-
-      if (ctx.request.url.substring(0, this.rpcUrl.length) !== this.rpcUrl) {
-        await next()
-        return
-      }
-
-      await this.bodyParser(ctx, () => null)
-      const prefix = ctx.query.prefix
-      const method = ctx.query.method
-      const auth = ctx.request.headers.authorization
-
-      if (typeof prefix !== 'string' || typeof auth !== 'string') {
-        console.error('unauthorized rpc request', ctx.query, ctx.request.body)
-        return ctx.throw(401)
-      }
-      if (!method) {
-        return ctx.throw(400, 'method is required')
-      }
-
-      const [ , authToken ] = auth.match(/^Bearer (.+)$/) || []
-      if (authToken !== token) {
-        console.error('unauthorized rpc request', ctx.query, ctx.request.body)
-        return ctx.throw(401)
-      }
-
-      try {
-        ctx.body = await this.plugin.receive(method, ctx.request.body)
-        ctx.status = 200
-      } catch (err) {
-        console.error('error processing rpc request', err)
-        return ctx.throw(422, err.message)
-      }
-    }
-  }
-
   paid ({ price, optional = false }) {
     return async (ctx, next) => {
       if (!this.plugin.isConnected()) {
