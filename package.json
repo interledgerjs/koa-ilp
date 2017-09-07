@@ -1,0 +1,42 @@
+{
+  "name": "koa-ilp",
+  "version": "0.0.0",
+  "description": "Koa middleware to create paid HTTP endpoints in seconds",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/justmoon/koa-ilp.git"
+  },
+  "keywords": [
+    "koa",
+    "middleware",
+    "ilp",
+    "payment",
+    "http",
+    "402",
+    "interledger"
+  ],
+  "author": "Stefan Thomas <justmoon@members.fsf.org>",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/justmoon/koa-ilp/issues"
+  },
+  "homepage": "https://github.com/justmoon/koa-ilp#readme",
+  "devDependencies": {
+    "eslint": "^4.3.0",
+    "eslint-config-standard": "^10.2.1",
+    "eslint-plugin-import": "^2.7.0",
+    "eslint-plugin-node": "^5.1.1",
+    "eslint-plugin-promise": "^3.5.0",
+    "eslint-plugin-standard": "^3.0.1"
+  },
+  "dependencies": {
+    "bignumber.js": "^4.0.2",
+    "ilp": "^11.2.0",
+    "ilp-plugin-bells": "^15.0.0",
+    "koa-bodyparser": "^4.2.0"
+  }
+}
