@@ -53,6 +53,10 @@ module.exports = class KoaIlp {
         await this.plugin.connect()
       }
 
+      const _price = (typeof price === 'function')
+        ? price(ctx)
+        : price
+
       const paymentToken = ctx.get('Pay-Token')
 
       if (!paymentToken) {
@@ -74,24 +78,24 @@ module.exports = class KoaIlp {
       }
 
       const headers = {
-        'Pay': String(price) + ' ' + psk.destinationAccount + ' ' + psk.sharedSecret,
+        'Pay': String(_price) + ' ' + psk.destinationAccount + ' ' + psk.sharedSecret,
         'Pay-Balance': balance.toNumber()
       }
 
       if (!optional && (new BigNumber(0)).greaterThanOrEqualTo(balance)) {
-        ctx.throw(402, `Your Payment Token ${paymentToken} has no funds available. It needs at least ${price}`, { headers })
+        ctx.throw(402, `Your Payment Token ${paymentToken} has no funds available. It needs at least ${_price}`, { headers })
       }
 
       let paid
-      if (balance.lessThan(price)) {
+      if (balance.lessThan(_price)) {
         if (!optional) {
-          ctx.throw(402, `Your Payment Token ${paymentToken} does not have sufficient funds available (has: ${balance}. It needs at least: ${price})`, { headers })
+          ctx.throw(402, `Your Payment Token ${paymentToken} does not have sufficient funds available (has: ${balance}. It needs at least: ${_price})`, { headers })
         }
 
         paid = false
       } else {
         // Update the token balance
-        balance = balance.minus(price)
+        balance = balance.minus(_price)
 
         paid = true
       }
@@ -104,7 +108,7 @@ module.exports = class KoaIlp {
         token: paymentToken,
         balance,
         paid,
-        price
+        price: _price
       }
 
       // Save balance
