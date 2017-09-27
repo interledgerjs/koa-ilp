@@ -57,8 +57,12 @@ module.exports = class KoaIlp {
         ? price(ctx)
         : price
 
-      const paymentToken = ctx.get('Pay-Token')
+      if (new BigNumber(_price).eq(0)) {
+        await next()
+        return
+      }
 
+      const paymentToken = ctx.get('Pay-Token')
       if (!paymentToken) {
         ctx.throw(402, 'No valid payment token provided')
       }
