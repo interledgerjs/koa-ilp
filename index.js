@@ -47,6 +47,33 @@ module.exports = class KoaIlp {
     })
   }
 
+  options ({ price, optional = false }) {
+    return async (ctx, next) => {
+      const _price = (typeof price === 'function')
+        ? price(ctx)
+        : price
+
+      const psk = ILP.PSK.generateParams({
+        destinationAccount: this.plugin.getAccount(),
+        receiverSecret: this.secret()
+      })
+
+      ctx.set('Pay',
+        price + ' ' +
+        psk.destinationAccount + ' ' +
+        psk.sharedSecret)
+
+      const paymentToken = ctx.get('Pay-Token')
+      if (paymentToken) {
+        ctx.set('Pay-Balance', (this.ilp.balances[paymentToken] ||
+          new BigNumber(0)).toNumber())
+      }
+
+      ctx.status = 204
+      await next()
+    }
+  }
+
   paid ({ price, optional = false }) {
     return async (ctx, next) => {
       if (!this.plugin.isConnected()) {
