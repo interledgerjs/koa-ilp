@@ -31,12 +31,8 @@ module.exports = class KoaIlp {
       }
       const token = base64url(incomingPayment.data)
 
-      try {
-        await incomingPayment.fulfill()
-      } catch (err) {
-        console.error('error fulfilling incoming payment', incomingPayment, err)
-      }
-
+      // TODO: begin fulfill and put balance into a pending state that causes
+      // requests on the token to wait until the fulfill is complete.
       if (this.balances[token]) {
         this.balances[token] = this.balances[token].add(incomingPayment.transfer.amount)
       } else {
@@ -44,6 +40,12 @@ module.exports = class KoaIlp {
       }
 
       debug(`received payment for token ${token} for ${incomingPayment.transfer.amount}, new balance ${this.balances[token].toString()}`)
+
+      try {
+        await incomingPayment.fulfill()
+      } catch (err) {
+        console.error('error fulfilling incoming payment', incomingPayment, err)
+      }
     })
   }
 
