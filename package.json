@@ -1,6 +1,6 @@
 {
   "name": "koa-ilp",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Koa middleware to create paid HTTP endpoints in seconds",
   "main": "index.js",
   "scripts": {
