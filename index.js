@@ -6,6 +6,8 @@ const ILP = require('ilp')
 const BigNumber = require('bignumber.js')
 const bodyParser = require('koa-bodyparser')
 
+const PAYMENT_METHOD_IDENTIFIER = 'interledger-psk'
+
 const base64url = buffer => buffer.toString('base64')
   .replace(/=/g, '')
   .replace(/\+/g, '-')
@@ -82,7 +84,7 @@ module.exports = class KoaIlp {
       }
 
       const headers = {
-        'Pay': String(_price) + ' ' + psk.destinationAccount + ' ' + psk.sharedSecret,
+        'Pay': PAYMENT_METHOD_IDENTIFIER + ' ' + String(_price) + ' ' + psk.destinationAccount + ' ' + psk.sharedSecret,
         'Pay-Balance': balance.toNumber()
       }
 
