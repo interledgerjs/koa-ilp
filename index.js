@@ -57,7 +57,7 @@ module.exports = class KoaIlp {
 
       const psk = ILP.PSK.generateParams({
         destinationAccount: this.plugin.getAccount(),
-        receiverSecret: this.secret()
+        receiverSecret: this.secret
       })
 
       ctx.set('Pay',
