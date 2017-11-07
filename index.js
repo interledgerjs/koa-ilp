@@ -51,9 +51,9 @@ module.exports = class KoaIlp {
 
   options ({ price, optional = false }) {
     return async (ctx, next) => {
-      const _price = (typeof price === 'function')
+      const _price = await Promise.resolve((typeof price === 'function')
         ? price(ctx)
-        : price
+        : price)
 
       const psk = ILP.PSK.generateParams({
         destinationAccount: this.plugin.getAccount(),
