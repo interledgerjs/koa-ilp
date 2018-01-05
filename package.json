@@ -35,7 +35,7 @@
   },
   "dependencies": {
     "bignumber.js": "^4.0.2",
-    "ilp": "^11.2.0",
+    "ilp": "interledgerjs/ilp#refactor/st-lpi2",
     "ilp-plugin-bells": "^15.0.0",
     "koa-bodyparser": "^4.2.0"
   }

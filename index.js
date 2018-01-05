@@ -1,5 +1,7 @@
 'use strict'
 
+const compat = require('ilp-compat-plugin')
+const ILDCP = require('ilp-protocol-ildcp')
 const debug = require('debug')('koa-ilp')
 const crypto = require('crypto')
 const ILP = require('ilp')
@@ -57,8 +59,10 @@ module.exports = class KoaIlp {
         ? price(ctx)
         : price)
 
+      const compatPlugin = compat(plugin)
+      const { clientAddress } = await ILDCP.fetch(compatPlugin.sendData.bind(compatPlugin))
       const psk = ILP.PSK.generateParams({
-        destinationAccount: this.plugin.getAccount(),
+        destinationAccount: clientAddress,
         receiverSecret: this.secret
       })
 
@@ -98,9 +102,10 @@ module.exports = class KoaIlp {
         ctx.throw(402, 'No valid payment token provided')
       }
 
-      const ilpAddress = this.plugin.getAccount()
+      const compatPlugin = compat(plugin)
+      const { clientAddress } = await ILDCP.fetch(compatPlugin.sendData.bind(compatPlugin))
       const psk = ILP.PSK.generateParams({
-        destinationAccount: ilpAddress,
+        destinationAccount: clientAddress,
         receiverSecret: this.secret
       })
 
