@@ -1,10 +1,8 @@
 'use strict'
 
-const compat = require('ilp-compat-plugin')
-const ILDCP = require('ilp-protocol-ildcp')
 const debug = require('debug')('koa-ilp')
 const crypto = require('crypto')
-const ILP = require('ilp')
+const PSK2 = require('ilp-protocol-psk2')
 const BigNumber = require('bignumber.js')
 const bodyParser = require('koa-bodyparser')
 
@@ -18,58 +16,55 @@ const base64url = buffer => buffer.toString('base64')
 module.exports = class KoaIlp {
   constructor ({ plugin }) {
     this.plugin = plugin
-    this.secret = crypto.randomBytes(32)
     this.balances = {}
-    this.rpcUrl = '/__ilp_rpc'
     this.bodyParser = bodyParser()
+  }
 
-    this.plugin.on('error', (err) => {
-      console.error('plugin error:', err)
-    })
+  async connect () {
+    if (this.psk2) return
+    this.psk2 = await PSK2.createReceiver({
+      plugin: this.plugin,
+      paymentHandler: async (params) => {
+        const token = base64url(params.id)
 
-    ILP.PSK.listen(this.plugin, {
-      receiverSecret: this.secret
-    }, async (incomingPayment) => {
-      if (incomingPayment.data.length !== 16) {
-        throw new Error('Invalid token length')
-      }
-      const token = base64url(incomingPayment.data)
+        // TODO: begin fulfill and put balance into a pending state that causes
+        // requests on the token to wait until the fulfill is complete.
+        if (this.balances[token]) {
+          this.balances[token] = this.balances[token].add(params.prepare.amount)
+        } else {
+          this.balances[token] = new BigNumber(params.prepare.amount)
+        }
 
-      // TODO: begin fulfill and put balance into a pending state that causes
-      // requests on the token to wait until the fulfill is complete.
-      if (this.balances[token]) {
-        this.balances[token] = this.balances[token].add(incomingPayment.transfer.amount)
-      } else {
-        this.balances[token] = new BigNumber(incomingPayment.transfer.amount)
-      }
+        debug(`received payment for token ${token} for ${params.prepare.amount}, new balance ${this.balances[token].toString()}`)
 
-      debug(`received payment for token ${token} for ${incomingPayment.transfer.amount}, new balance ${this.balances[token].toString()}`)
-
-      try {
-        await incomingPayment.fulfill()
-      } catch (err) {
-        console.error('error fulfilling incoming payment', incomingPayment, err)
+        try {
+          return params.acceptSingleChunk()
+        } catch (err) {
+          console.error('error fulfilling incoming payment', params, err)
+        }
       }
     })
   }
 
-  options ({ price, optional = false }) {
+  getPayHeader (price) {
+    const psk = this.psk2.generateAddressAndSecret()
+
+    // price comes last because it's an optional argument
+    return 'interledger-psk2 ' +
+      psk.destinationAccount + ' ' +
+      psk.sharedSecret.toString('base64') +
+      (price ? (' ' + price) : '')
+  }
+
+  options ({ price }) {
     return async (ctx, next) => {
+      await this.connect()
+
       const _price = await Promise.resolve((typeof price === 'function')
         ? price(ctx)
         : price)
 
-      const compatPlugin = compat(plugin)
-      const { clientAddress } = await ILDCP.fetch(compatPlugin.sendData.bind(compatPlugin))
-      const psk = ILP.PSK.generateParams({
-        destinationAccount: clientAddress,
-        receiverSecret: this.secret
-      })
-
-      ctx.set('Pay',
-        price + ' ' +
-        psk.destinationAccount + ' ' +
-        psk.sharedSecret)
+      ctx.set('Pay', this.getPayHeader(_price))
 
       const paymentToken = ctx.get('Pay-Token')
       if (paymentToken) {
@@ -88,6 +83,8 @@ module.exports = class KoaIlp {
         await this.plugin.connect()
       }
 
+      await this.connect()
+
       const _price = (typeof price === 'function')
         ? price(ctx)
         : price
@@ -102,12 +99,6 @@ module.exports = class KoaIlp {
         ctx.throw(402, 'No valid payment token provided')
       }
 
-      const compatPlugin = compat(plugin)
-      const { clientAddress } = await ILDCP.fetch(compatPlugin.sendData.bind(compatPlugin))
-      const psk = ILP.PSK.generateParams({
-        destinationAccount: clientAddress,
-        receiverSecret: this.secret
-      })
 
       // TODO make sure an attacker can't overwhelm us with tokens
       let balance
@@ -118,7 +109,7 @@ module.exports = class KoaIlp {
       }
 
       const headers = {
-        'Pay': PAYMENT_METHOD_IDENTIFIER + ' ' + String(_price) + ' ' + psk.destinationAccount + ' ' + psk.sharedSecret,
+        'Pay': this.getPayHeader(_price),
         'Pay-Balance': balance.toNumber()
       }
 
