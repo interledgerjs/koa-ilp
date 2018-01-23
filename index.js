@@ -50,7 +50,7 @@ module.exports = class KoaIlp {
     const psk = this.psk2.generateAddressAndSecret()
 
     // price comes last because it's an optional argument
-    return 'interledger-psk2 ' +
+    return PAYMENT_METHOD_IDENTIFIER + ' ' +
       psk.destinationAccount + ' ' +
       psk.sharedSecret.toString('base64') +
       (price ? (' ' + price) : '')
