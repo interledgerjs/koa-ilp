@@ -6,7 +6,7 @@ const PSK2 = require('ilp-protocol-psk2')
 const BigNumber = require('bignumber.js')
 const bodyParser = require('koa-bodyparser')
 
-const PAYMENT_METHOD_IDENTIFIER = 'interledger-psk'
+const PAYMENT_METHOD_IDENTIFIER = 'interledger-psk2'
 
 const base64url = buffer => buffer.toString('base64')
   .replace(/=/g, '')
@@ -50,7 +50,7 @@ module.exports = class KoaIlp {
     const psk = this.psk2.generateAddressAndSecret()
 
     // price comes last because it's an optional argument
-    return 'interledger-psk2 ' +
+    return PAYMENT_METHOD_IDENTIFIER + ' ' +
       psk.destinationAccount + ' ' +
       psk.sharedSecret.toString('base64') +
       (price ? (' ' + price) : '')
