@@ -6,7 +6,7 @@ const PSK2 = require('ilp-protocol-psk2')
 const BigNumber = require('bignumber.js')
 const bodyParser = require('koa-bodyparser')
 
-const PAYMENT_METHOD_IDENTIFIER = 'interledger-psk'
+const PAYMENT_METHOD_IDENTIFIER = 'interledger-psk2'
 
 const base64url = buffer => buffer.toString('base64')
   .replace(/=/g, '')
