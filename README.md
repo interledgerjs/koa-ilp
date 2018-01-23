@@ -9,6 +9,7 @@ to charge for requests.
 // first, we start with an ordinary Koa app
 const Koa = require('koa')
 const router = require('koa-router')()
+const parser = require('koa-bodyparser')()
 const app = new Koa()
 
 // next, we import koa-ilp and automagically get a plugin using ilp-plugin. We
