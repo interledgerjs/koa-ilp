@@ -24,21 +24,31 @@ module.exports = class KoaIlp {
     if (this.psk2) return
     this.psk2 = await PSK2.createReceiver({
       plugin: this.plugin,
-      paymentHandler: async (params) => {
-        const token = base64url(params.id)
+      requestHandler: (params) => {
+        let token
+        try {
+          const tokenBuf = params.data.slice(0, 16)
+          if (tokenBuf.length !== 16) {
+            throw new Error('no token in PSK2 data')
+          }
+          token = base64url(tokenBuf)
+        } catch (err) {
+          debug('unable to parse pay token from PSK2 data, rejecting now')
+          return params.reject(Buffer.from('PSK2 data must contain a 16-byte token'))
+        }
 
         // TODO: begin fulfill and put balance into a pending state that causes
         // requests on the token to wait until the fulfill is complete.
         if (this.balances[token]) {
-          this.balances[token] = this.balances[token].add(params.prepare.amount)
+          this.balances[token] = this.balances[token].add(params.amount)
         } else {
-          this.balances[token] = new BigNumber(params.prepare.amount)
+          this.balances[token] = new BigNumber(params.amount)
         }
 
-        debug(`received payment for token ${token} for ${params.prepare.amount}, new balance ${this.balances[token].toString()}`)
+        debug(`received payment for token ${token} for ${params.amount}, new balance ${this.balances[token].toString()}`)
 
         try {
-          return params.acceptSingleChunk()
+          return params.accept()
         } catch (err) {
           console.error('error fulfilling incoming payment', params, err)
         }
