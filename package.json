@@ -39,7 +39,7 @@
   },
   "dependencies": {
     "bignumber.js": "^4.0.2",
-    "ilp-protocol-psk2": "^0.2.0",
+    "ilp-protocol-psk2": "^0.3.0",
     "koa-bodyparser": "^4.2.0"
   }
 }
